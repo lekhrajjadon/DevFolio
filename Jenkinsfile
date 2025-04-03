@@ -1,45 +1,26 @@
 pipeline {
     agent any
 
-    environment {
-        DEPLOY_DIR = "/var/www/html"
-        REPO_URL = "https://github.com/lekhrajjadon/DevFolio.git"
-    }
-
     stages {
         stage('Clone Repository') {
             steps {
                 script {
-                    sh "sudo rm -rf ${DEPLOY_DIR}/*"
-                    sh "sudo git clone ${REPO_URL} ${DEPLOY_DIR}"
+                    sh 'sudo rm -rf /var/www/html/* || true'
+                    sh 'sudo git clone https://github.com/lekhrajjadon/DevFolio.git /var/www/html'
                 }
             }
         }
 
         stage('Set Permissions') {
             steps {
-                script {
-                    sh "sudo chown -R jenkins:www-data ${DEPLOY_DIR}"
-                    sh "sudo chmod -R 775 ${DEPLOY_DIR}"
-                }
+                sh 'sudo chown -R www-data:www-data /var/www/html'
             }
         }
 
         stage('Restart Web Server') {
             steps {
-                script {
-                    sh "sudo systemctl restart nginx || sudo systemctl restart apache2"
-                }
+                sh 'sudo systemctl restart nginx'
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Deployment successful! 🚀"
-        }
-        failure {
-            echo "Deployment failed! ❌"
         }
     }
 }
