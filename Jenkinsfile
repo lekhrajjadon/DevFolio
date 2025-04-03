@@ -1,34 +1,20 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', 
-                    url: 'https://github.com/lekhrajjadon/DevFolio.git'
+                git url: 'https://github.com/lekhrajjadon/DevFolio.git', 
+                     branch: 'master'
             }
         }
-
+        
         stage('Deploy') {
             steps {
                 sh '''
-                    # Clear destination
-                    rm -rf /var/www/html/*
-                    
-                    # Copy files
-                    cp -r . /var/www/html/
-                    
-                    # Set permissions (works with either permission or sudo approach)
-                    chown -R www-data:www-data /var/www/html || true
-                    find /var/www/html -type d -exec chmod 755 {} \\; || true
-                    find /var/www/html -type f -exec chmod 644 {} \\; || true
+                    ssh -o StrictHostKeyChecking=no  azureuser@172.174.42.22 \
+                    "sudo git -C /var/www/html pull origin main"
                 '''
-            }
-        }
-
-        stage('Restart Web Server') {
-            steps {
-                sh 'systemctl reload nginx || true'
             }
         }
     }
