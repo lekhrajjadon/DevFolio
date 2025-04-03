@@ -2,26 +2,34 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                script {
-                    sh 'sudo rm -rf /var/www/html/* || true'
-                    sh 'sudo git clone https://github.com/lekhrajjadon/DevFolio.git /var/www/html'
-                }
+                git branch: 'master', 
+                    url: 'https://github.com/lekhrajjadon/DevFolio.git'
             }
         }
 
-        stage('Set Permissions') {
+        stage('Deploy') {
             steps {
-                sh 'sudo chown -R www-data:www-data /var/www/html'
+                sh '''
+                    # Clear destination
+                    rm -rf /var/www/html/*
+                    
+                    # Copy files
+                    cp -r . /var/www/html/
+                    
+                    # Set permissions (works with either permission or sudo approach)
+                    chown -R www-data:www-data /var/www/html || true
+                    find /var/www/html -type d -exec chmod 755 {} \\; || true
+                    find /var/www/html -type f -exec chmod 644 {} \\; || true
+                '''
             }
         }
 
         stage('Restart Web Server') {
             steps {
-                sh 'sudo systemctl restart nginx'
+                sh 'systemctl reload nginx || true'
             }
         }
     }
 }
-
