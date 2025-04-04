@@ -5,14 +5,14 @@ pipeline {
         stage('Clone Repository on Application VM') {
             steps {
                 script {
-                    // SSH into the Azure VM and pull the latest code
+                    // SSH into the Azure VM and reset the repository
                     sh '''
                     ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 <<EOF
                     sudo git config --global --add safe.directory /var/www/html
-                    sudo chown -R azureuser:azureuser /var/www/html
-                    sudo chmod -R 755 /var/www/html
                     cd /var/www/html
-                    git pull origin master
+                    sudo git reset --hard HEAD  # Discard local changes
+                    sudo git clean -fd  # Remove untracked files
+                    sudo git pull origin master
                     EOF
                     '''
                 }
@@ -22,7 +22,6 @@ pipeline {
         stage('Restart Nginx') {
             steps {
                 script {
-                    // Restart Nginx service
                     sh '''
                     ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 <<EOF
                     sudo systemctl restart nginx
@@ -35,10 +34,10 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful!"
+            echo "✅ Deployment Successful!"
         }
         failure {
-            echo "Deployment Failed!"
+            echo "❌ Deployment Failed!"
         }
     }
 }
