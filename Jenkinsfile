@@ -1,24 +1,20 @@
 pipeline {
     agent any
 
-    environment {
-        SSH_USER = "azureuser"
-        SSH_HOST = "172.174.42.22"
-        SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa"
-        APP_DIR = "/var/www/html"
-        GIT_REPO = "https://github.com/lekhrajjadon/DevFolio.git"
-    }
-
     stages {
         stage('Clone Repository on Application VM') {
             steps {
                 script {
-                    sh """
-                    ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
-                        cd $APP_DIR
-                        git pull origin master || git clone $GIT_REPO .
+                    // SSH into the Azure VM and pull the latest code
+                    sh '''
+                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 <<EOF
+                    sudo git config --global --add safe.directory /var/www/html
+                    sudo chown -R azureuser:azureuser /var/www/html
+                    sudo chmod -R 755 /var/www/html
+                    cd /var/www/html
+                    git pull origin master
                     EOF
-                    """
+                    '''
                 }
             }
         }
@@ -26,11 +22,12 @@ pipeline {
         stage('Restart Nginx') {
             steps {
                 script {
-                    sh """
-                    ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
-                        sudo systemctl restart nginx
+                    // Restart Nginx service
+                    sh '''
+                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 <<EOF
+                    sudo systemctl restart nginx
                     EOF
-                    """
+                    '''
                 }
             }
         }
