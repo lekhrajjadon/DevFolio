@@ -5,15 +5,13 @@ pipeline {
         stage('Clone Repository on Application VM') {
             steps {
                 script {
-                    // SSH into the Azure VM and reset the repository
                     sh '''
-                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 << 'EOF'
-                    sudo git config --global --add safe.directory /var/www/html
-                    cd /var/www/html
-                    sudo git reset --hard HEAD  # Discard local changes
-                    sudo git clean -fd  # Remove untracked files
-                    sudo git pull origin master
-                    EOF
+                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 \
+                    "sudo git config --global --add safe.directory /var/www/html && \
+                    cd /var/www/html && \
+                    sudo git reset --hard HEAD && \
+                    sudo git clean -fd && \
+                    sudo git pull origin master"
                     '''
                 }
             }
@@ -23,9 +21,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 << 'EOF'
-                    sudo systemctl restart nginx
-                    EOF
+                    ssh -i /var/lib/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no azureuser@172.174.42.22 \
+                    "sudo systemctl restart nginx"
                     '''
                 }
             }
